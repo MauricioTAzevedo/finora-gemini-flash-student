@@ -1,0 +1,12 @@
+{
+  "project_name": "finora-gemini-flash-student",
+  "runtime": "antigravity",
+  "version": "1.13.0",
+  "preferred_language": "pt-BR",
+  "currency": "BRL",
+  "workflow": {
+    "auto_verify": true,
+    "commit_docs": true,
+    "enforce_financial_invariants": true
+  }
+}
