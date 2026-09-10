@@ -25,6 +25,10 @@ func NewRouter(fs *service.FinancialService, validHouseholdID uuid.UUID) http.Ha
 	apiMux.HandleFunc("POST /imports/reconcile", h.ReconcileImportHandler)
 	apiMux.HandleFunc("GET /forecast", h.ForecastHandler)
 	apiMux.HandleFunc("POST /scenarios/affordability", h.AffordabilityScenarioHandler)
+	apiMux.HandleFunc("GET /intelligence/subscriptions", h.SubscriptionsHandler)
+	apiMux.HandleFunc("GET /intelligence/anomalies", h.AnomaliesHandler)
+	apiMux.HandleFunc("POST /intelligence/query", h.QueryHandler)
+	apiMux.HandleFunc("GET /events", h.EventsHandler)
 
 	// Wrap apiMux with HouseholdAuthMiddleware
 	authWrapper := HouseholdAuthMiddleware(validHouseholdID)(apiMux)

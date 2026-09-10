@@ -9,7 +9,8 @@ import {
   UploadCloud, 
   Sparkles, 
   Users,
-  LineChart 
+  LineChart,
+  Activity
 } from 'lucide-react';
 
 const navItems = [
@@ -18,6 +19,8 @@ const navItems = [
   { href: '/accounts', label: 'Contas & Cartões', icon: CreditCard },
   { href: '/imports', label: 'Centro de Importação', icon: UploadCloud },
   { href: '/forecast', label: 'Projeções & Cenários', icon: LineChart },
+  { href: '/intelligence', label: 'Inteligência & Anomalias', icon: Sparkles },
+  { href: '/events', label: 'Event Explorer (Outbox)', icon: Activity },
 ];
 
 export function Navigation() {

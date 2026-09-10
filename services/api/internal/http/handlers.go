@@ -281,3 +281,93 @@ func (h *Handler) AffordabilityScenarioHandler(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(comp)
 }
+
+// SubscriptionsHandler returns detected recurring charges and subscriptions.
+func (h *Handler) SubscriptionsHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := r.Context().Value(RequestIDKey).(string)
+	householdID, ok := r.Context().Value(HouseholdIDKey).(uuid.UUID)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Missing household context", reqID)
+		return
+	}
+
+	subs, err := h.financialService.DetectSubscriptions(r.Context(), householdID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), reqID)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"subscriptions": subs,
+		"count":         len(subs),
+	})
+}
+
+// AnomaliesHandler returns statistical anomalies detected in household spend.
+func (h *Handler) AnomaliesHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := r.Context().Value(RequestIDKey).(string)
+	householdID, ok := r.Context().Value(HouseholdIDKey).(uuid.UUID)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Missing household context", reqID)
+		return
+	}
+
+	anoms, err := h.financialService.DetectAnomalies(r.Context(), householdID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), reqID)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"anomalies": anoms,
+		"count":     len(anoms),
+	})
+}
+
+type QueryRequest struct {
+	Query string `json:"query"`
+}
+
+// QueryHandler parses a natural-language query and executes safe DSL filters.
+func (h *Handler) QueryHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := r.Context().Value(RequestIDKey).(string)
+	householdID, ok := r.Context().Value(HouseholdIDKey).(uuid.UUID)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Missing household context", reqID)
+		return
+	}
+
+	var req QueryRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST_BODY", err.Error(), reqID)
+		return
+	}
+
+	result, err := h.financialService.QueryFinancialData(r.Context(), householdID, req.Query)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), reqID)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(result)
+}
+
+// EventsHandler returns recent domain outbox events for developer audit and exploration.
+func (h *Handler) EventsHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := r.Context().Value(RequestIDKey).(string)
+	householdID, ok := r.Context().Value(HouseholdIDKey).(uuid.UUID)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Missing household context", reqID)
+		return
+	}
+
+	events := h.financialService.ListEvents(householdID.String())
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"events": events,
+		"total":  len(events),
+	})
+}
