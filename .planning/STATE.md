@@ -44,11 +44,17 @@
   - HTTP import endpoint: `POST /api/v1/imports/reconcile` returning explainable match evidence.
   - Synthetic Brazilian test fixtures in `database/samples/` (`extrato_nubank_agosto.ofx`, `planilha_gastos_familia.csv`).
 
-## Test Verification Summary
-1. **Go Ledger & Security Suite**: 13 unit/HTTP tests passing (`go test -v ./...`).
-2. **Python AI Service Suite**: 3 pytest tests passing (`pytest -v`).
-3. **Web Production Build**: All 7 static and dynamic routes compiled successfully with zero type errors (`pnpm build`).
+- [x] **Milestone 4: Deterministic Forecasting & Digital Twin**
+  - Deterministic cash flow forecasting engine (`services/api/internal/forecasting/engine.go`) computing exact daily balances across 7, 30, 90, and 180 days without LLM math hallucinations.
+  - "Can We Afford This?" What-If scenario simulation evaluating installment commitments (e.g. 12x parcelas) against household baseline and minimum reserve target.
+  - HTTP endpoints: `GET /api/v1/forecast?days=30` and `POST /api/v1/scenarios/affordability`.
+  - Next.js interactive UI (`apps/web/src/app/forecast/page.tsx`) with real-time affordability calculator and cash impact explanation.
 
-## Next Priority (Milestone 3 & 4)
+## Test Verification Summary
+1. **Go Ledger, Importer & Forecasting Suite**: 15 unit/HTTP tests passing (`go test -v ./...`).
+2. **Python AI Service Suite**: 3 pytest tests passing (`pytest -v`).
+3. **Web Production Build**: All 8 static and dynamic routes compiled successfully with zero type errors (`pnpm build`).
+
+## Next Priority (Milestone 3 & 5)
 - **Milestone 3**: Financial Intelligence: Subscription detection engine & Statistical anomaly detection (CPFL electricity baseline deviation).
-- **Milestone 4**: Deterministic Forecast Engine (7-day, 30-day, 90-day cash flow projections) and "Can we afford this?" installment simulator.
+- **Milestone 5**: Transactional Outbox relay & Event Explorer.

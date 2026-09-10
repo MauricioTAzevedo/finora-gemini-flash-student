@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/domain"
+	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/forecasting"
 	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/importer"
 	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/repository"
 	"github.com/google/uuid"
@@ -239,4 +240,93 @@ func (s *FinancialService) ReconcileImport(ctx context.Context, householdID uuid
 		DuplicateCount: duplicateCount,
 		Results:        results,
 	}, nil
+}
+
+type ForecastResponseDTO struct {
+	Summary     forecasting.ForecastSummary     `json:"summary"`
+	Projections []forecasting.DailyProjection   `json:"projections"`
+}
+
+func (s *FinancialService) GetForecast(ctx context.Context, householdID uuid.UUID, horizonDays int) (*ForecastResponseDTO, error) {
+	accounts, err := s.repo.ListAccounts(ctx, householdID)
+	if err != nil {
+		return nil, err
+	}
+
+	var totalCash int64
+	var cardStatement int64
+	for _, acc := range accounts {
+		if acc.Type == domain.AccountTypeCreditCard {
+			if acc.CurrentBalanceMinor < 0 {
+				cardStatement += -acc.CurrentBalanceMinor
+			}
+		} else {
+			totalCash += acc.CurrentBalanceMinor
+		}
+	}
+
+	// Model Brazilian household parameters
+	salaryMonthly := int64(850000)  // R$ 8.500,00
+	salaryDay := 5
+	billsMonthly := int64(240000)   // R$ 2.400,00
+	billDay := 15
+	cardDueDay := 10
+	reserveTarget := int64(500000)  // R$ 5.000,00
+
+	projections, summary := forecasting.RunDeterministicForecast(
+		domain.NewBRL(totalCash),
+		salaryMonthly,
+		salaryDay,
+		billsMonthly,
+		billDay,
+		cardDueDay,
+		cardStatement,
+		horizonDays,
+		reserveTarget,
+	)
+
+	return &ForecastResponseDTO{
+		Summary:     summary,
+		Projections: projections,
+	}, nil
+}
+
+func (s *FinancialService) EvaluateScenario(ctx context.Context, householdID uuid.UUID, scenario forecasting.Scenario) (*forecasting.ScenarioComparison, error) {
+	accounts, err := s.repo.ListAccounts(ctx, householdID)
+	if err != nil {
+		return nil, err
+	}
+
+	var totalCash int64
+	var cardStatement int64
+	for _, acc := range accounts {
+		if acc.Type == domain.AccountTypeCreditCard {
+			if acc.CurrentBalanceMinor < 0 {
+				cardStatement += -acc.CurrentBalanceMinor
+			}
+		} else {
+			totalCash += acc.CurrentBalanceMinor
+		}
+	}
+
+	salaryMonthly := int64(850000)
+	salaryDay := 5
+	billsMonthly := int64(240000)
+	billDay := 15
+	cardDueDay := 10
+	reserveTarget := int64(500000)
+
+	comp := forecasting.EvaluateAffordability(
+		scenario,
+		domain.NewBRL(totalCash),
+		salaryMonthly,
+		salaryDay,
+		billsMonthly,
+		billDay,
+		cardDueDay,
+		cardStatement,
+		reserveTarget,
+	)
+
+	return &comp, nil
 }

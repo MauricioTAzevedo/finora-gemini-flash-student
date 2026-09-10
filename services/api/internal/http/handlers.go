@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/domain"
+	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/forecasting"
 	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/service"
 	"github.com/google/uuid"
 )
@@ -221,4 +222,62 @@ func (h *Handler) ReconcileImportHandler(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(report)
+}
+
+// ForecastHandler computes deterministic day-by-day cash flow projections.
+func (h *Handler) ForecastHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := r.Context().Value(RequestIDKey).(string)
+	householdID, ok := r.Context().Value(HouseholdIDKey).(uuid.UUID)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Missing household context", reqID)
+		return
+	}
+
+	days := 30
+	if d := r.URL.Query().Get("days"); d != "" {
+		if val, err := strconv.Atoi(d); err == nil && val > 0 && val <= 365 {
+			days = val
+		}
+	}
+
+	resp, err := h.financialService.GetForecast(r.Context(), householdID, days)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), reqID)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// AffordabilityScenarioHandler simulates a hypothetical installment purchase.
+func (h *Handler) AffordabilityScenarioHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := r.Context().Value(RequestIDKey).(string)
+	householdID, ok := r.Context().Value(HouseholdIDKey).(uuid.UUID)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Missing household context", reqID)
+		return
+	}
+
+	var scenario forecasting.Scenario
+	if err := json.NewDecoder(r.Body).Decode(&scenario); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST_BODY", err.Error(), reqID)
+		return
+	}
+
+	if scenario.InstallmentCount <= 0 {
+		scenario.InstallmentCount = 1
+	}
+	if scenario.InstallmentMonthlyMinor <= 0 && scenario.TotalAmountMinor > 0 {
+		scenario.InstallmentMonthlyMinor = scenario.TotalAmountMinor / int64(scenario.InstallmentCount)
+	}
+
+	comp, err := h.financialService.EvaluateScenario(r.Context(), householdID, scenario)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), reqID)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(comp)
 }

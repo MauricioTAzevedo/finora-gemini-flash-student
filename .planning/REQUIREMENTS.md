@@ -30,9 +30,9 @@
 - [ ] **REQ-M3-03**: Natural language querying with structured tool-calling.
 
 ## Milestone 4: Deterministic Forecasting & Digital Twin
-- [ ] **REQ-M4-01**: 7-day, 30-day, 90-day cash flow forecast engine.
-- [ ] **REQ-M4-02**: "Can we afford this?" installment simulator.
-- [ ] **REQ-M4-03**: Goal planning integration with baseline forecasts.
+- [x] **REQ-M4-01**: 7-day, 30-day, 90-day cash flow forecast engine.
+- [x] **REQ-M4-02**: "Can we afford this?" installment simulator.
+- [x] **REQ-M4-03**: Goal planning integration with baseline forecasts.
 
 ## Milestone 5: Automations & Distributed Events
 - [ ] **REQ-M5-01**: Transactional outbox relay to NATS JetStream.

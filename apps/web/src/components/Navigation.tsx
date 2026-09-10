@@ -8,7 +8,8 @@ import {
   CreditCard, 
   UploadCloud, 
   Sparkles, 
-  Users 
+  Users,
+  LineChart 
 } from 'lucide-react';
 
 const navItems = [
@@ -16,6 +17,7 @@ const navItems = [
   { href: '/transactions', label: 'Transações', icon: Receipt },
   { href: '/accounts', label: 'Contas & Cartões', icon: CreditCard },
   { href: '/imports', label: 'Centro de Importação', icon: UploadCloud },
+  { href: '/forecast', label: 'Projeções & Cenários', icon: LineChart },
 ];
 
 export function Navigation() {
