@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"io"
+	"strings"
 	"time"
 
 	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/domain"
+	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/importer"
 	"github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/repository"
 	"github.com/google/uuid"
 )
@@ -182,4 +185,58 @@ func (s *FinancialService) ListAccounts(ctx context.Context, householdID uuid.UU
 
 func (s *FinancialService) ListCategories(ctx context.Context, householdID uuid.UUID) ([]domain.Category, error) {
 	return s.repo.ListCategories(ctx, householdID)
+}
+
+type ImportReportDTO struct {
+	TotalParsed    int                          `json:"totalParsed"`
+	NewCount       int                          `json:"newCount"`
+	CandidateCount int                          `json:"candidateCount"`
+	DuplicateCount int                          `json:"duplicateCount"`
+	Results        []importer.ReconciliationResult `json:"results"`
+}
+
+func (s *FinancialService) ReconcileImport(ctx context.Context, householdID uuid.UUID, format string, r io.Reader) (*ImportReportDTO, error) {
+	var records []importer.CanonicalIngestionRecord
+	var err error
+
+	if strings.ToLower(format) == "ofx" {
+		records, err = importer.ParseOFX(r)
+	} else {
+		records, err = importer.ParseCSV(r)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	existingTxs, _, err := s.repo.ListTransactions(ctx, householdID, 1000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []importer.ReconciliationResult
+	newCount := 0
+	candidateCount := 0
+	duplicateCount := 0
+
+	for _, rec := range records {
+		res := importer.ReconcileTransaction(rec, existingTxs)
+		switch res.Status {
+		case importer.MatchStatusNew:
+			newCount++
+		case importer.MatchStatusCandidate:
+			candidateCount++
+		case importer.MatchStatusDuplicate:
+			duplicateCount++
+		}
+		results = append(results, res)
+	}
+
+	return &ImportReportDTO{
+		TotalParsed:    len(records),
+		NewCount:       newCount,
+		CandidateCount: candidateCount,
+		DuplicateCount: duplicateCount,
+		Results:        results,
+	}, nil
 }

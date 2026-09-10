@@ -22,6 +22,7 @@ func NewRouter(fs *service.FinancialService, validHouseholdID uuid.UUID) http.Ha
 	apiMux.HandleFunc("GET /categories", h.ListCategoriesHandler)
 	apiMux.HandleFunc("GET /transactions", h.ListTransactionsHandler)
 	apiMux.HandleFunc("POST /transactions/expense", h.CreateExpenseHandler)
+	apiMux.HandleFunc("POST /imports/reconcile", h.ReconcileImportHandler)
 
 	// Wrap apiMux with HouseholdAuthMiddleware
 	authWrapper := HouseholdAuthMiddleware(validHouseholdID)(apiMux)

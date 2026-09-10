@@ -3,6 +3,7 @@ package http_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	internalHttp "github.com/MauricioTAzevedo/finora-gemini-flash-student/services/api/internal/http"
@@ -67,5 +68,23 @@ func TestHealthEndpoints(t *testing.T) {
 
 	if rrReady.Code != http.StatusOK {
 		t.Errorf("/readyz returned %d, want 200", rrReady.Code)
+	}
+}
+
+func TestReconcileImportEndpoint(t *testing.T) {
+	householdID := uuid.MustParse("b0000000-0000-0000-0000-000000000001")
+	repo := repository.NewMemoryRepository()
+	fs := service.NewFinancialService(repo)
+	router := internalHttp.NewRouter(fs, householdID)
+
+	csvPayload := "Data;Descrição;Valor;Categoria\n12/08/2026;Supermercado Extra;-150,00;Alimentação\n"
+	req := httptest.NewRequest("POST", "/api/v1/imports/reconcile?format=csv", strings.NewReader(csvPayload))
+	req.Header.Set("X-Household-ID", householdID.String())
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK on reconcile import, got %d", rr.Code)
 	}
 }

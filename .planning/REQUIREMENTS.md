@@ -19,10 +19,10 @@
 - [x] **REQ-M1-09**: Synthetic demo seed ("Família Silva Demo") providing realistic Brazilian financial data.
 
 ## Milestone 2: Intelligent Imports & Migration Center
-- [ ] **REQ-M2-01**: Ingestion pipeline for CSV, XLSX, and OFX bank statements.
-- [ ] **REQ-M2-02**: Python AI service for ambiguous column mapping and confidence scoring.
-- [ ] **REQ-M2-03**: Merchant normalization rules and fuzzy string matching.
-- [ ] **REQ-M2-04**: Duplicate detection and reconciliation scoring.
+- [x] **REQ-M2-01**: Ingestion pipeline for CSV, XLSX, and OFX bank statements.
+- [x] **REQ-M2-02**: Python AI service for ambiguous column mapping and confidence scoring.
+- [x] **REQ-M2-03**: Merchant normalization rules and fuzzy string matching.
+- [x] **REQ-M2-04**: Duplicate detection and reconciliation scoring.
 
 ## Milestone 3: Financial Intelligence & Briefs
 - [ ] **REQ-M3-01**: Subscription and recurring charge detection.

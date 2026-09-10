@@ -198,3 +198,27 @@ func (h *Handler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(tx)
 }
+
+// ReconcileImportHandler handles file reconciliation for uploaded CSV or OFX statements.
+func (h *Handler) ReconcileImportHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := r.Context().Value(RequestIDKey).(string)
+	householdID, ok := r.Context().Value(HouseholdIDKey).(uuid.UUID)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Missing household context", reqID)
+		return
+	}
+
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "csv"
+	}
+
+	report, err := h.financialService.ReconcileImport(r.Context(), householdID, format, r.Body)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "RECONCILIATION_FAILED", err.Error(), reqID)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(report)
+}

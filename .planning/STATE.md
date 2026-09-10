@@ -37,11 +37,18 @@
     - Accounts and Credit Cards page with credit limit progress bar and statement billing dates.
     - Import & Migration Center with spreadsheet analysis, AI column mapping review, confidence indicators, duplicate detection, and import rollback.
 
+- [x] **Milestone 2: Intelligent Imports & Migration Center**
+  - Deterministic Brazilian OFX statement parser (`services/api/internal/importer/ofx.go`).
+  - Brazilian financial CSV parser (`services/api/internal/importer/csv.go`) with auto-delimiter detection (`;` and `,`).
+  - Reconciliation & Deduplication engine (`services/api/internal/importer/reconciliation.go`) calculating multi-signal match scores to prevent duplicate balance inflation.
+  - HTTP import endpoint: `POST /api/v1/imports/reconcile` returning explainable match evidence.
+  - Synthetic Brazilian test fixtures in `database/samples/` (`extrato_nubank_agosto.ofx`, `planilha_gastos_familia.csv`).
+
 ## Test Verification Summary
-1. **Go Ledger & Security Suite**: 8 domain tests + 2 security/HTTP tests passing (`go test -v ./...`).
+1. **Go Ledger & Security Suite**: 13 unit/HTTP tests passing (`go test -v ./...`).
 2. **Python AI Service Suite**: 3 pytest tests passing (`pytest -v`).
 3. **Web Production Build**: All 7 static and dynamic routes compiled successfully with zero type errors (`pnpm build`).
 
-## Next Priority (Milestone 2)
-- Ingest live spreadsheet files (.xlsx, .csv, .ofx) via backend file upload pipeline.
-- Implement fuzzy reconciliation engine between imported statement lines and existing ledger transactions.
+## Next Priority (Milestone 3 & 4)
+- **Milestone 3**: Financial Intelligence: Subscription detection engine & Statistical anomaly detection (CPFL electricity baseline deviation).
+- **Milestone 4**: Deterministic Forecast Engine (7-day, 30-day, 90-day cash flow projections) and "Can we afford this?" installment simulator.
